@@ -1,4 +1,4 @@
-name: BSTAF       
+name: Run botli        
 
 on:        
   workflow_dispatch:        
@@ -31,7 +31,7 @@ on:
     branches:        
       - "main"        
     paths:        
-      - "Hiio/user_interface.py"        
+      - "Myshirt/user_interface.py"        
 
   schedule:        
     - cron: "1 */5 * * *"        
@@ -52,11 +52,11 @@ jobs:
       - name: Checkout workflow repo        
         uses: actions/checkout@v3        
 
-      - name: Clone private repo (Hiio)        
+      - name: Clone private repo (Myshirt)        
         run: |        
-          echo "Cloning zonalraid45/Hiio..."        
-          git clone https://x-access-token:${{ secrets.EXO }}@github.com/zonalraid45/Hiio.git Hiio      
-          ls -la Hiio       
+          echo "Cloning zonalraid45/Myshirt..."        
+          git clone https://x-access-token:${{ secrets.EXO }}@github.com/zonalraid45/Myshirt.git Myshirt        
+          ls -la Myshirt        
 
       - name: Set up Python        
         uses: actions/setup-python@v4        
@@ -67,20 +67,20 @@ jobs:
         uses: actions/cache@v4        
         with:        
           path: ~/.cache/pip        
-          key: ${{ runner.os }}-pip-${{ hashFiles('Hiio/requirements.txt') }}        
+          key: ${{ runner.os }}-pip-${{ hashFiles('Myshirt/requirements.txt') }}        
           restore-keys: |        
             ${{ runner.os }}-pip-        
 
       - name: Install Python dependencies        
-        run: cd Hiio && pip install -r requirements.txt        
+        run: cd Myshirt && pip install -r requirements.txt        
 
       - name: Inject Secret Token into config.yml        
-        run: cd Hiio && sed -i "s/TokenTimeIsBackBuddyss/${{ secrets.LICHESS_KEY }}/g" config.yml        
+        run: cd Myshirt && sed -i "s/TokenTimeIsBackBuddyss/${{ secrets.LICHESS_KEY }}/g" bstaf.yml        
 
       - name: Make Stockfish Executable        
         run: |        
-          cd Hiio       
-          chmod +x ./engines/sf || true        
+          cd Myshirt        
+          chmod +x ./engines/stockfish || true        
           chmod +x ./engines/fsf || true        
 
       - name: Install GitHub CLI        
@@ -95,7 +95,7 @@ jobs:
           echo "Checking for previous active workflows..."        
           CURRENT_RUN_ID=${{ github.run_id }}        
 
-          RUNS=$(gh run list --workflow "BSTAF" --status in_progress --json databaseId --jq ".[].databaseId" | grep -v "^$" | grep -v "$CURRENT_RUN_ID" || true)        
+          RUNS=$(gh run list --workflow "Run botli" --status in_progress --json databaseId --jq ".[].databaseId" | grep -v "^$" | grep -v "$CURRENT_RUN_ID" || true)        
 
           if [ -n "$RUNS" ]; then        
             echo "Found previous active workflow(s): $RUNS"        
@@ -119,8 +119,8 @@ jobs:
           NEVER_STOP="${{ github.event.inputs.never_stop }}"        
           STOP_SECONDS="${{ github.event.inputs.stop_seconds }}"        
 
-          cd Hiio        
-          CMD="python3 -u user_interface.py"        
+          cd Myshirt        
+          CMD="python3 -u user_interface.py --config bstaf.yml"        
           [ "$UPGRADE" = "true" ] && CMD="$CMD --upgrade"        
           [ "$MATCHMAKING" = "true" ] && CMD="$CMD matchmaking"        
           [ -n "$ADDITIONAL_CMD" ] && CMD="$CMD $ADDITIONAL_CMD"        
