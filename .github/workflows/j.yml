@@ -1,40 +1,31 @@
-name: Upload Stockfish11 to Myshirt repo
+name: List running workflows of Lichessbotli
 
 on:
-  workflow_dispatch: # Run manually
-  # Uncomment below if you want it to run automatically every day
-  # schedule:
-  #   - cron: "0 0 * * *"
+  workflow_dispatch: # run manually
 
 jobs:
-  upload:
+  list:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout current repo
-        uses: actions/checkout@v4
-
-      - name: Clone target repo (Myshirt)
+      - name: List running workflows
         env:
-          TOKEN: ${{ secrets.EXO }}
+          TOKEN: ${{ secrets.EXO }} # use your same GitHub token
+          USER: "Lichessbotli"
         run: |
-          git clone https://$TOKEN@github.com/zonalraid45/Myshirt.git target_repo
-          echo "✅ Cloned Myshirt repo"
-          mkdir -p target_repo/engines
+          echo "Fetching repositories for $USER..."
+          # Get list of repos for the user
+          repos=$(curl -s -H "Authorization: token $TOKEN" \
+            "https://api.github.com/users/$USER/repos?per_page=100" | jq -r '.[].name')
 
-      - name: Copy stockfish11 into target repo
-        run: |
-          cp stockfish11 target_repo/engines/
-          echo "✅ Copied stockfish11 to target_repo/engines/"
-
-      - name: Commit and push changes to target repo
-        env:
-          TOKEN: ${{ secrets.EXO }}
-        run: |
-          cd target_repo
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add engines/stockfish11
-          git commit -m "Update Stockfish11 from source repo" || echo "No changes to commit"
-          git push https://$TOKEN@github.com/zonalraid45/Myshirt.git main
-          echo "✅ Changes pushed successfully!"
+          for repo in $repos; do
+            echo "----- Checking $repo -----"
+            runs=$(curl -s -H "Authorization: token $TOKEN" \
+              "https://api.github.com/repos/$USER/$repo/actions/runs?status=in_progress&per_page=5" | jq -r '.workflow_runs[]?.name')
+            if [ -z "$runs" ]; then
+              echo "No workflows running in $repo"
+            else
+              echo "Running workflows in $repo:"
+              echo "$runs"
+            fi
+          done
